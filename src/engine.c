@@ -56,7 +56,8 @@ int voxscale[MAXVOXELS];
 
 static int ggxinc[MAXXSIZ+1], ggyinc[MAXXSIZ+1];
 static int lowrecip[1024], nytooclose, nytoofar;
-static unsigned int distrecip[65536];
+//static unsigned int distrecip[65536];
+static unsigned int *distrecip;
 
 static int *lookups = NULL;
 int dommxoverlay = 1, beforedrawrooms = 1;
@@ -4844,7 +4845,19 @@ static void initksqrt(void)
 	}
 }
 
+static int distrecip_curr = -1;
+static int distrecip_xdim[4] = {0,0,0,0};
+static uint32_t *distrecip_cache[4] = {0,0,0,0};
 
+static int distrecip_cache_find(int xdim) {
+	for(int i=0;i<4;i++) {
+		if(distrecip_xdim[i] == xdim) {
+			distrecip = &distrecip_cache[i][0];
+			return 0;
+		}
+	}
+	return 1;
+}
 //
 // dosetaspect
 //
@@ -4876,7 +4889,20 @@ static void dosetaspect(void)
 			if (j != 0) j = mulscale16((int)radarang[k+1]-(int)radarang[k],j);
 			radarang2[i] = (short)(((int)radarang[k]+j)>>6);
 		}
-		for(i=1;i<65536;i++) distrecip[i] = divscale20(xdimen,i);
+		if(distrecip_cache_find(xdimen)) {
+			distrecip_curr++;
+			distrecip_curr &= 0x3;
+			if(distrecip_cache[distrecip_curr] == 0) {
+				distrecip_cache[distrecip_curr] = malloc(65536*sizeof(uint32_t));
+				if(distrecip_cache[distrecip_curr] == 0) {
+					printf("distrecip_cache alloc failed");
+					exit(-1);
+				}
+			}
+			distrecip_xdim[distrecip_curr] = xdimen;
+			distrecip = &distrecip_cache[distrecip_curr][0];
+			for(i=1;i<65536;i++) distrecip[i] = divscale20(xdimen,i);
+		}
 		nytooclose = xdimen*2100;
 		nytoofar = 65536*16384-1048576;
 	}
@@ -5544,7 +5570,16 @@ void drawrooms(int daposx, int daposy, int daposz,
 {
 	int i, j, z, cz, fz, closest;
 	short *shortptr1, *shortptr2;
+#ifdef __MEASURE__
+    uint64_t ds_time();
+    static uint64_t tms[100];
+	int a = 0;
+	#define GET_TIME tms[a] = ds_time();a++;
+#else
+	#define GET_TIME 
+#endif
 
+    GET_TIME
 	beforedrawrooms = 0;
 
 	globalposx = daposx; globalposy = daposy; globalposz = daposz;
@@ -5568,12 +5603,15 @@ void drawrooms(int daposx, int daposy, int daposz,
 	cosviewingrangeglobalang = mulscale16(cosglobalang,viewingrange);
 	sinviewingrangeglobalang = mulscale16(singlobalang,viewingrange);
 
+    GET_TIME
 	if ((xyaspect != oxyaspect) || (xdimen != oxdimen) || (viewingrange != oviewingrange))
 		dosetaspect();
 
+    GET_TIME
 	//clearbufbyte(&gotsector[0],(int)((numsectors+7)>>3),0L);
 	Bmemset(&gotsector[0],0,(int)((numsectors+7)>>3));
 
+    GET_TIME
 	shortptr1 = (short *)&startumost[windowx1];
 	shortptr2 = (short *)&startdmost[windowx1];
 	i = xdimen-1;
@@ -5585,6 +5623,7 @@ void drawrooms(int daposx, int daposy, int daposz,
 	} while (i != 0);
 	umost[0] = shortptr1[0]-windowy1;
 	dmost[0] = shortptr2[0]-windowy1;
+    GET_TIME
 
 	//============================================================================= //POLYMOST BEGINS
 #if USE_POLYMOST
@@ -5607,6 +5646,7 @@ void drawrooms(int daposx, int daposy, int daposz,
 		updatesector(globalposx,globalposy,&globalcursectnum);
 		if (globalcursectnum < 0) globalcursectnum = i;
 	}
+    GET_TIME
 
 	globparaceilclip = 1;
 	globparaflorclip = 1;
@@ -5615,6 +5655,7 @@ void drawrooms(int daposx, int daposy, int daposz,
 	if (globalposz > fz) globparaflorclip = 0;
 
 	scansector(globalcursectnum);
+    GET_TIME
 
 	if (inpreparemirror)
 	{
@@ -5642,6 +5683,7 @@ void drawrooms(int daposx, int daposy, int daposz,
 		mirrorsy1 = min(umost[mirrorsx1],umost[mirrorsx2]);
 		mirrorsy2 = max(dmost[mirrorsx1],dmost[mirrorsx2]);
 	}
+    GET_TIME
 
 	while ((numbunches > 0) && (numhits > 0))
 	{
@@ -5675,8 +5717,22 @@ void drawrooms(int daposx, int daposy, int daposz,
 		bunchfirst[closest] = bunchfirst[numbunches];
 		bunchlast[closest] = bunchlast[numbunches];
 	}
+    GET_TIME
 
 	enddrawing();	//}}}
+#ifdef __MEASURE__
+    for( int jj=1;jj<a;jj++) {
+        printf("^%d:", jj);
+        printf(" %8lld", (tms[jj] - tms[jj-1]));
+        printf(" %8lld", tms[jj]);
+        printf(" %8lld", tms[jj-1]);
+        printf("\n");
+    }
+    printf("--- %8lld ", (tms[a-1] - tms[0]));
+    printf(" %8lld", tms[a-1]);
+    printf(" %8lld",  tms[a]);
+	printf("\n");
+#endif
 }
 
 
