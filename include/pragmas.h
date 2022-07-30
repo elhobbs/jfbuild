@@ -3624,6 +3624,50 @@ static __inline void swapchar2(void *a, void *b, int s)
 #define wo(x)	((int16_t)(x))		// word cast
 #define by(x)	((int8_t)(x))		// byte cast
 
+#if 1 //def __NDS__
+
+int64_t smul_32_32_64(int a, int b);
+
+#define NDS_REG_DIVCNT			(*(volatile uint16_t*)(0x04000280))
+#define NDS_REG_DIV_NUMER		(*(volatile uint64_t*) (0x04000290))
+#define NDS_REG_DIV_DENOM_L		(*(volatile uint32_t*) (0x04000298))
+#define NDS_REG_DIV_RESULT_L	(*(volatile uint32_t*) (0x040002A0))
+#define NDS_DIV_64_32			1
+#define NDS_DIV_BUSY			(1<<15)
+
+#define _scaler(a) \
+int smulscale##a(int eax, int edx); \
+static inline int mulscale##a(int eax, int edx) \
+{ \
+	return smulscale##a(eax, edx); \
+} \
+\
+static inline int divscale##a(int num, int den) \
+{ \
+	NDS_REG_DIVCNT = NDS_DIV_64_32; \
+ \
+	while(NDS_REG_DIVCNT & NDS_DIV_BUSY); \
+ \
+	NDS_REG_DIV_NUMER = ((int64_t)num) << a; \
+	NDS_REG_DIV_DENOM_L = den; \
+ \
+	while(NDS_REG_DIVCNT & NDS_DIV_BUSY); \
+ \
+	return (NDS_REG_DIV_RESULT_L); \
+} \
+\
+static inline int dmulscale##a(int eax, int edx, int esi, int edi) \
+{ \
+	return dw((smul_32_32_64(eax,edx) + smul_32_32_64(esi,edi)) >> a); \
+} \
+\
+static inline int tmulscale##a(int eax, int edx, int ebx, int ecx, int esi, int edi) \
+{ \
+	return dw((smul_32_32_64(eax,edx) + smul_32_32_64(ebx,ecx) + smul_32_32_64(esi,edi)) >> a); \
+} \
+
+#else
+
 #define _scaler(a) \
 static inline int mulscale##a(int eax, int edx) \
 { \
@@ -3644,6 +3688,10 @@ static inline int tmulscale##a(int eax, int edx, int ebx, int ecx, int esi, int 
 { \
 	return dw(((qw(eax) * qw(edx)) + (qw(ebx) * qw(ecx)) + (qw(esi) * qw(edi))) >> a); \
 } \
+
+
+#endif
+
 
 _scaler(1)	_scaler(2)	_scaler(3)	_scaler(4)
 _scaler(5)	_scaler(6)	_scaler(7)	_scaler(8)

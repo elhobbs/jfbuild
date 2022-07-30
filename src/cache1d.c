@@ -5,7 +5,7 @@
 // This file has been modified from Ken Silverman's original release
 // by Jonathon Fowler (jf@jonof.id.au)
 
-#define WITHKPLIB
+//#define WITHKPLIB
 
 #include "build.h"
 #include "cache1d.h"
@@ -1075,6 +1075,9 @@ static void lzwrelease(void)
 
 int kdfread(void *buffer, bsize_t dasizeof, bsize_t count, int fil)
 {
+#ifdef __NDS__
+	fread(buffer,dasizeof,count,fil);
+#else
 	size_t i, j;
 	int k, kgoal;
 	short leng;
@@ -1107,11 +1110,15 @@ int kdfread(void *buffer, bsize_t dasizeof, bsize_t count, int fil)
 		ptr += dasizeof;
 	}
 	lzwrelease();
+#endif
 	return count;
 }
 
 int dfread(void *buffer, bsize_t dasizeof, bsize_t count, BFILE *fil)
 {
+#ifdef __NDS__
+	fread(buffer,dasizeof,count,fil);
+#else
 	size_t i, j;
 	int k, kgoal;
 	short leng;
@@ -1144,11 +1151,15 @@ int dfread(void *buffer, bsize_t dasizeof, bsize_t count, BFILE *fil)
 		ptr += dasizeof;
 	}
 	lzwrelease();
+#endif
 	return count;
 }
 
 void kdfwrite(void *buffer, bsize_t dasizeof, bsize_t count, int fil)
 {
+#ifdef __NDS__
+  fwrite(buffer,dasizeof,count,fil);
+#else
 	size_t i, j, k;
 	short leng, swleng;
 	unsigned char *ptr;
@@ -1187,10 +1198,14 @@ void kdfwrite(void *buffer, bsize_t dasizeof, bsize_t count, int fil)
 		if (Bwrite(fil,lzwbuf5,(int)leng) != leng) { lzwrelease(); return; }
 	}
 	lzwrelease();
+#endif
 }
 
 void dfwrite(void *buffer, bsize_t dasizeof, bsize_t count, BFILE *fil)
 {
+#ifdef __NDS__
+  fwrite(buffer,dasizeof,count,fil);
+#else
 	size_t i, j, k;
 	short leng, swleng;
 	unsigned char *ptr;
@@ -1229,6 +1244,7 @@ void dfwrite(void *buffer, bsize_t dasizeof, bsize_t count, BFILE *fil)
 		if (Bfwrite(lzwbuf5,(int)leng,1,fil) != 1) { lzwrelease(); return; }
 	}
 	lzwrelease();
+#endif
 }
 
 static int lzwcompress(unsigned char *lzwinbuf, int uncompleng, unsigned char *lzwoutbuf)

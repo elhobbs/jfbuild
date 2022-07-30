@@ -51,6 +51,10 @@
 
 #include "compat.h"
 
+#if defined __NDS__
+#include <malloc.h>
+#endif
+
 
 #ifndef __compat_h_macrodef__
 
@@ -833,6 +837,19 @@ char *Bstrupr(char *s)
 }
 #endif
 
+#if defined __NDS__
+
+int getMemUsed() { // returns the amount of used memory in bytes 
+   struct mallinfo mi = mallinfo(); 
+   return mi.uordblks; 
+} 
+
+int getMemFree() { // returns the amount of free memory in bytes 
+   struct mallinfo mi = mallinfo(); 
+   return mi.fordblks + (getHeapLimit() - getHeapEnd()); 
+}
+
+#endif
 
 //
 // getsysmemsize() -- gets the amount of system memory in the machine
@@ -849,6 +866,9 @@ size_t Bgetsysmemsize(void)
         }
 	
 	return siz;
+#elif defined __NDS__
+
+	return getMemFree();
 #elif (defined(_SC_PAGE_SIZE) || defined(_SC_PAGESIZE)) && defined(_SC_PHYS_PAGES)
 	size_t siz = 0x7fffffff;
 	long scpagesiz, scphyspages;

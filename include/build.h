@@ -25,6 +25,28 @@
 extern "C" {
 #endif
 
+#ifdef __NDS__
+
+#define MAXSECTORSV8 1024
+#define MAXWALLSV8 4096
+#define MAXSPRITESV8 2048
+
+#define MAXSECTORSV7 1024
+#define MAXWALLSV7 4096
+#define MAXSPRITESV7 4096
+
+#define MAXSECTORSV6 1024
+#define MAXWALLSV6   4096
+#define MAXSPRITESV6 2048
+#define MAXTILESV6   4096
+
+#define MAXSECTORSV5 1024
+#define MAXWALLSV5   4096
+#define MAXSPRITESV5 2048
+#define MAXTILESV5   4096
+
+#else
+
 #define MAXSECTORSV8 4096
 #define MAXWALLSV8 16384
 #define MAXSPRITESV8 16384
@@ -43,6 +65,8 @@ extern "C" {
 #define MAXSPRITESV5 4096
 #define MAXTILESV5   4096
 
+#endif
+
 #define MAXSECTORS MAXSECTORSV8
 #define MAXWALLS MAXWALLSV8
 #define MAXSPRITES MAXSPRITESV8
@@ -51,8 +75,13 @@ extern "C" {
 #define MAXVOXELS 4096
 #define MAXSTATUS 1024
 #define MAXPLAYERS 16
+#if defined __NDS__
+#define MAXXDIM 512
+#define MAXYDIM 512
+#else
 #define MAXXDIM 2880
 #define MAXYDIM 1800
+#endif
 #define MAXPALOOKUPS 256
 #define MAXPSKYTILES 256
 #define MAXSPRITESONSCREEN 1024

@@ -5312,7 +5312,7 @@ static int raytrace(int x3, int y3, int *x4, int *y4)
 // Exported Engine Functions
 //
 
-#if !defined _WIN32 && defined DEBUGGINGAIDS
+#if !defined _WIN32 && defined DEBUGGINGAIDS && !defined __NDS__
 #include <signal.h>
 static void sighandler(int sig, siginfo_t *info, void *ctx)
 {
@@ -5402,7 +5402,7 @@ int initengine(void)
 {
 	int i, j;
 
-#if !defined _WIN32 && defined DEBUGGINGAIDS
+#if !defined _WIN32 && defined DEBUGGINGAIDS && !defined __NDS__
 	struct sigaction sigact, oldact;
 	memset(&sigact, 0, sizeof(sigact));
 	sigact.sa_sigaction = sighandler;
@@ -7824,11 +7824,16 @@ int loadpics(char *filename, int askedsize)
 
 	//try dpmi_DETERMINEMAXREALALLOC!
 
+#if defined __NDS__
+	cachesize = Bgetsysmemsize() * 0.8f;
+#else
 	//cachesize = min((int)((Bgetsysmemsize()/100)*60),max(artsize,askedsize));
 	if (Bgetsysmemsize() <= (unsigned int)askedsize)
 		cachesize = (Bgetsysmemsize()/100)*60;
 	else
 		cachesize = askedsize;
+#endif
+
 	while ((pic = kmalloc(cachesize)) == NULL)
 	{
 		cachesize -= 65536L;
