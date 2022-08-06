@@ -3729,10 +3729,32 @@ static inline int kmin(int a, int b) { if ((signed int)a < (signed int)b) return
 static inline int kmax(int a, int b) { if ((signed int)a < (signed int)b) return b; return a; }
 
 static inline int sqr(int eax) { return (eax) * (eax); }
-static inline int scale(int eax, int edx, int ecx) { return dw((qw(eax) * qw(edx)) / qw(ecx)); }
-static inline int mulscale(int eax, int edx, int ecx) { return dw((qw(eax) * qw(edx)) >> by(ecx)); }
-static inline int divscale(int eax, int ebx, int ecx) { return dw((qw(eax) << by(ecx)) / qw(ebx)); }
-static inline int dmulscale(int eax, int edx, int esi, int edi, int ecx) { return dw(((qw(eax) * qw(edx)) + (qw(esi) * qw(edi))) >> by(ecx)); }
+static inline int scale(int eax, int edx, int ecx) {
+	NDS_REG_DIVCNT = NDS_DIV_64_32;
+	while(NDS_REG_DIVCNT & NDS_DIV_BUSY);
+
+	NDS_REG_DIV_NUMER = smul_32_32_64(eax,edx);
+	NDS_REG_DIV_DENOM_L = ecx; \
+
+	while(NDS_REG_DIVCNT & NDS_DIV_BUSY);
+
+	return (NDS_REG_DIV_RESULT_L);
+}
+static inline int mulscale(int eax, int edx, int ecx) {
+	return dw(smul_32_32_64(eax,edx) >> by(ecx)); 
+}
+static inline int divscale(int num, int den, int a) { 
+	NDS_REG_DIVCNT = NDS_DIV_64_32;
+	while(NDS_REG_DIVCNT & NDS_DIV_BUSY);
+
+	NDS_REG_DIV_NUMER = ((int64_t)num) << a;
+	NDS_REG_DIV_DENOM_L = den; \
+
+	while(NDS_REG_DIVCNT & NDS_DIV_BUSY);
+
+	return (NDS_REG_DIV_RESULT_L);
+}
+static inline int dmulscale(int eax, int edx, int esi, int edi, int ecx) { return dw((smul_32_32_64w(eax,edx) + smul_32_32_64w(esi,edi)) >> by(ecx)); }
 
 static inline int boundmulscale(int a, int d, int c)
 { // courtesy of Ken
