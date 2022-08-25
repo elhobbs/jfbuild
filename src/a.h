@@ -147,6 +147,12 @@ void __cdecl stretchhline(void *,int,int,int,void *,void *);
 
 #define ENGINE_USING_A_C
 
+#ifdef __NDS__
+#define ITCM_CODE __attribute__((section(".itcm"), long_call)) __attribute__((optimize("Ofast"))) __attribute__((hot)) __attribute__((target("arm")))
+#else
+#define ITCM_CODE
+#endif
+
 void setvlinebpl(int dabpl);
 void fixtransluscence(void *datransoff);
 void settransnormal(void);
@@ -155,34 +161,34 @@ void settransreverse(void);
 void sethlinesizes(int logx, int logy, void *bufplc);
 void setpalookupaddress(void *paladdr);
 void setuphlineasm4(int bxinc, int byinc);
-void hlineasm4(int cnt, int skiploadincs, int paloffs, unsigned int by, unsigned int bx, void *p);
+void hlineasm4(int cnt, int skiploadincs, int paloffs, unsigned int by, unsigned int bx, void *p) ITCM_CODE;
 
 void setupslopevlin(int logylogx, void *bufplc, int pinc);
 void slopevlin(void *p, int i, void *slopaloffs, int cnt, int bx, int by);
 
 void setupvlineasm(int neglogy);
-void vlineasm1(int vinc, void *paloffs, int cnt, unsigned int vplc, void *bufplc, void *p);
+void vlineasm1(int vinc, void *paloffs, int cnt, unsigned int vplc, void *bufplc, void *p) ITCM_CODE;
 
 void setupmvlineasm(int neglogy);
-void mvlineasm1(int vinc, void *paloffs, int cnt, unsigned int vplc, void *bufplc, void *p);
+void mvlineasm1(int vinc, void *paloffs, int cnt, unsigned int vplc, void *bufplc, void *p) ITCM_CODE;
 
 void setuptvlineasm(int neglogy);
-void tvlineasm1(int vinc, void *paloffs, int cnt, unsigned int vplc, void *bufplc, void *p);
+void tvlineasm1(int vinc, void *paloffs, int cnt, unsigned int vplc, void *bufplc, void *p) ITCM_CODE;
 
 void msethlineshift(int logx, int logy);
-void mhline(void *bufplc, unsigned int bx, int cntup16, int junk, unsigned int by, void *p);
+void mhline(void *bufplc, unsigned int bx, int cntup16, int junk, unsigned int by, void *p) ITCM_CODE;
 
 void tsethlineshift(int logx, int logy);
-void thline(void *bufplc, unsigned int bx, int cntup16, int junk, unsigned int by, void *p);
+void thline(void *bufplc, unsigned int bx, int cntup16, int junk, unsigned int by, void *p) ITCM_CODE;
 
 void setupspritevline(void *paloffs, int bxinc, int byinc, int ysiz);
-void spritevline(int bx, int by, int cnt, void *bufplc, void *p);
+void spritevline(int bx, int by, int cnt, void *bufplc, void *p) ITCM_CODE;
 
 void msetupspritevline(void *paloffs, int bxinc, int byinc, int ysiz);
-void mspritevline(int bx, int by, int cnt, void *bufplc, void *p);
+void mspritevline(int bx, int by, int cnt, void *bufplc, void *p) ITCM_CODE;
 
 void tsetupspritevline(void *paloffs, int bxinc, int byinc, int ysiz);
-void tspritevline(int bx, int by, int cnt, void *bufplc, void *p);
+void tspritevline(int bx, int by, int cnt, void *bufplc, void *p) ITCM_CODE;
 
 void setupdrawslab (int dabpl, void *pal);
 void drawslab (int dx, int v, int dy, int vi, void *vptr, void *p);

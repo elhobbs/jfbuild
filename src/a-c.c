@@ -9,6 +9,11 @@
 #include "compat.h"
 #include "a.h"
 
+#ifdef __NDS__
+#pragma GCC optimize("Ofast,unroll-loops")
+#pragma GCC target("arm")
+#endif
+
 #ifdef ENGINE_USING_A_C
 
 int krecip(int num);	// from engine.c
