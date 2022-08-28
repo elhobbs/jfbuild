@@ -411,12 +411,26 @@ static inline int msqrtasm(unsigned int c)
 	return a;
 }
 
-static inline int krecipasm(int i)
+static inline int krecipasm2(int i)
 { // Ken did this
 	float f = (float)i; i = *(int *)&f;
 	return((reciptable[(i>>12)&2047]>>(((i-0x3f800000)>>23)&31))^(i>>31));
 }
 
+static inline int krecipasm(int i)
+{
+	int sgn = 1;
+	unsigned int a = i;
+	int clz;
+	if(i == 0) {
+		return 0x20000000;
+	}
+	if(i < 0) {
+		a = -i;
+	}
+	clz = __builtin_clz(a);
+	return (reciptable[((a<<clz)>>20) & 0x7ff] >> (32 - clz - 1)) ^ (i>>31);
+}
 
 static inline int getclipmask(int a, int b, int c, int d)
 { // Ken did this
