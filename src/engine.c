@@ -35,6 +35,11 @@
 #include <math.h>
 #include <assert.h>
 
+#ifdef __NDS__
+#pragma GCC optimize("Ofast,unroll-loops")
+#pragma GCC target("arm")
+#endif
+
 void *kmalloc(bsize_t size) { return(Bmalloc(size)); }
 void kfree(void *buffer) { Bfree(buffer); }
 
@@ -417,18 +422,13 @@ static inline int krecipasm2(int i)
 	return((reciptable[(i>>12)&2047]>>(((i-0x3f800000)>>23)&31))^(i>>31));
 }
 
-static inline int krecipasm(int i)
+static inline int krecipasm(int i) 
 {
-	int sgn = 1;
-	unsigned int a = i;
-	int clz;
 	if(i == 0) {
 		return 0x20000000;
 	}
-	if(i < 0) {
-		a = -i;
-	}
-	clz = __builtin_clz(a);
+	unsigned int a = i > 0 ? i : -i;
+	int clz = __builtin_clz(a);
 	return (reciptable[((a<<clz)>>20) & 0x7ff] >> (32 - clz - 1)) ^ (i>>31);
 }
 
